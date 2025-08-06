@@ -1,10 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { RouterOutlet, RouterModule } from '@angular/router';
+import { LucideAngularModule, Menu, Users, Package, FileText, DollarSign, BarChart3 } from 'lucide-angular';
+import { ButtonComponent } from './ui/button.component';
 
 @Component({
   selector: 'app-root',
@@ -12,114 +10,103 @@ import { MatSidenavModule } from '@angular/material/sidenav';
   imports: [
     CommonModule,
     RouterOutlet,
-    MatToolbarModule,
-    MatButtonModule,
-    MatIconModule,
-    MatSidenavModule
+    RouterModule,
+    LucideAngularModule,
+    ButtonComponent
   ],
   template: `
-    <div class="app-container">
-      <mat-toolbar color="primary" class="app-toolbar">
-        <button mat-icon-button (click)="toggleSidenav()">
-          <mat-icon>menu</mat-icon>
-        </button>
-        <span class="app-title">TopSol</span>
-        <span class="spacer"></span>
-        <button mat-icon-button>
-          <mat-icon>account_circle</mat-icon>
-        </button>
-      </mat-toolbar>
+    <div class="flex h-screen bg-background">
+      <!-- Sidebar -->
+      <aside class="w-64 bg-card border-r border-border">
+        <div class="p-6">
+          <h1 class="text-2xl font-bold text-foreground">TOP SOL</h1>
+          <p class="text-sm text-muted-foreground">Sistema de Gestão</p>
+        </div>
+        
+        <nav class="px-4 space-y-1">
+          <a 
+            routerLink="/dashboard" 
+            routerLinkActive="bg-accent text-accent-foreground" 
+            class="flex items-center gap-3 px-3 py-2 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <lucide-icon [img]="BarChart3Icon" size="18"></lucide-icon>
+            Dashboard
+          </a>
+          
+          <a 
+            routerLink="/clients" 
+            routerLinkActive="bg-accent text-accent-foreground"
+            class="flex items-center gap-3 px-3 py-2 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <lucide-icon [img]="UsersIcon" size="18"></lucide-icon>
+            Clientes
+          </a>
+          
+          <a 
+            routerLink="/collections" 
+            routerLinkActive="bg-accent text-accent-foreground"
+            class="flex items-center gap-3 px-3 py-2 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <lucide-icon [img]="PackageIcon" size="18"></lucide-icon>
+            Coleções
+          </a>
+          
+          <a 
+            routerLink="/notes" 
+            routerLinkActive="bg-accent text-accent-foreground"
+            class="flex items-center gap-3 px-3 py-2 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <lucide-icon [img]="FileTextIcon" size="18"></lucide-icon>
+            Notas
+          </a>
+          
+          <a 
+            routerLink="/financial" 
+            routerLinkActive="bg-accent text-accent-foreground"
+            class="flex items-center gap-3 px-3 py-2 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <lucide-icon [img]="DollarSignIcon" size="18"></lucide-icon>
+            Financeiro
+          </a>
+        </nav>
+      </aside>
 
-      <mat-sidenav-container class="app-sidenav-container">
-        <mat-sidenav #sidenav mode="side" opened class="app-sidenav">
-          <nav class="nav-menu">
-            <a mat-button routerLink="/dashboard" class="nav-item">
-              <mat-icon>dashboard</mat-icon>
-              <span>Dashboard</span>
-            </a>
-            <a mat-button routerLink="/clients" class="nav-item">
-              <mat-icon>people</mat-icon>
-              <span>Clientes</span>
-            </a>
-            <a mat-button routerLink="/collections" class="nav-item">
-              <mat-icon>collections</mat-icon>
-              <span>Coleções</span>
-            </a>
-            <a mat-button routerLink="/notes" class="nav-item">
-              <mat-icon>receipt</mat-icon>
-              <span>Notas</span>
-            </a>
-            <a mat-button routerLink="/financial" class="nav-item">
-              <mat-icon>attach_money</mat-icon>
-              <span>Financeiro</span>
-            </a>
-          </nav>
-        </mat-sidenav>
+      <!-- Main Content -->
+      <main class="flex-1 flex flex-col">
+        <!-- Header -->
+        <header class="h-16 bg-card border-b border-border flex items-center justify-between px-6">
+          <div class="flex items-center gap-4">
+            <ui-button variant="ghost" size="icon" class="lg:hidden">
+              <lucide-icon [img]="MenuIcon" size="18"></lucide-icon>
+            </ui-button>
+          </div>
+          
+          <div class="flex items-center gap-4">
+            <ui-button variant="ghost" size="sm">
+              Configurações
+            </ui-button>
+            <ui-button variant="outline" size="sm">
+              Sair
+            </ui-button>
+          </div>
+        </header>
 
-        <mat-sidenav-content class="app-content">
+        <!-- Content -->
+        <div class="flex-1 overflow-auto p-6">
           <router-outlet></router-outlet>
-        </mat-sidenav-content>
-      </mat-sidenav-container>
+        </div>
+      </main>
     </div>
   `,
-  styles: [`
-    .app-container {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .app-toolbar {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-
-    .app-title {
-      font-size: 1.5rem;
-      font-weight: 500;
-    }
-
-    .spacer {
-      flex: 1 1 auto;
-    }
-
-    .app-sidenav-container {
-      flex: 1;
-      height: calc(100vh - 64px);
-    }
-
-    .app-sidenav {
-      width: 250px;
-    }
-
-    .nav-menu {
-      padding: 1rem 0;
-    }
-
-    .nav-item {
-      width: 100%;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-align: left;
-      justify-content: flex-start;
-    }
-
-    .nav-item mat-icon {
-      margin-right: 8px;
-    }
-
-    .app-content {
-      padding: 1rem;
-    }
-  `]
 })
 export class AppComponent {
-  title = 'TopSol - Sistema de Gestão';
+  title = 'TOP SOL - Sistema de Gestão';
 
-  toggleSidenav() {
-    // Will implement sidenav toggle logic
-  }
+  // Lucide icons
+  MenuIcon = Menu;
+  UsersIcon = Users;
+  PackageIcon = Package;
+  FileTextIcon = FileText;
+  DollarSignIcon = DollarSign;
+  BarChart3Icon = BarChart3;
 }
