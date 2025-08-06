@@ -9,6 +9,10 @@ if [ ! -d "node_modules" ]; then
     npm install
 fi
 
+# Forçar build para compilar o Tailwind CSS
+echo "🎨 Compilando Tailwind CSS..."
+npm run build
+
 echo "🚀 Iniciando servidor de desenvolvimento Angular..."
 
 # Executar o comando original

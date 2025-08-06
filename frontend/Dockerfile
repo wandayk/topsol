@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci && npm cache clean --force
 
 # Copy source code
 COPY . .
@@ -20,9 +20,6 @@ FROM nginx:alpine AS production
 
 # Copy built files from builder stage
 COPY --from=builder /app/dist/topsol-frontend /usr/share/nginx/html
-
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
 
 # Expose port 80
 EXPOSE 80

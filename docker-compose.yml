@@ -81,20 +81,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: development
+      target: production
     container_name: topsol_frontend
     restart: unless-stopped
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     ports:
-      - "4200:4200"
+      - "4200:80"
     networks:
       - topsol_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4200"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
       interval: 30s
       timeout: 10s
       retries: 3
