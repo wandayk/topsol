@@ -21,6 +21,9 @@ FROM nginx:alpine AS production
 # Copy built files from builder stage
 COPY --from=builder /app/dist/topsol-frontend /usr/share/nginx/html
 
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 # Expose port 80
 EXPOSE 80
 

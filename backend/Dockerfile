@@ -29,6 +29,8 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 # Copy entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN chmod -R 775 storage/logs
+RUN chown -R www-data:www-data storage/logs && docker-compose exec backend chmod -R 775 storage/logs
 
 EXPOSE 9000
 

@@ -1,8 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterModule } from '@angular/router';
-import { LucideAngularModule, Menu, Users, Package, FileText, DollarSign, BarChart3 } from 'lucide-angular';
+import { RouterOutlet, RouterModule, Router } from '@angular/router';
+import { LucideAngularModule, Menu, Users, Package, FileText, DollarSign, BarChart3, LogOut } from 'lucide-angular';
 import { ButtonComponent } from './ui/button.component';
+import { AuthService, User } from './features/auth/auth.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -15,7 +17,7 @@ import { ButtonComponent } from './ui/button.component';
     ButtonComponent
   ],
   template: `
-    <div class="flex h-screen bg-background">
+    <div class="flex h-screen bg-background" *ngIf="currentUser$ | async as user; else loginView">
       <!-- Sidebar -->
       <aside class="w-64 bg-card border-r border-border">
         <div class="p-6">
@@ -82,10 +84,16 @@ import { ButtonComponent } from './ui/button.component';
           </div>
           
           <div class="flex items-center gap-4">
-            <ui-button variant="ghost" size="sm">
-              Configurações
-            </ui-button>
-            <ui-button variant="outline" size="sm">
+            <span class="text-sm text-muted-foreground">
+              Olá, {{ user.name }}
+            </span>
+            <ui-button 
+              variant="outline" 
+              size="sm"
+              (click)="logout()"
+              class="flex items-center gap-2"
+            >
+              <lucide-icon [img]="LogOutIcon" size="16"></lucide-icon>
               Sair
             </ui-button>
           </div>
@@ -97,10 +105,15 @@ import { ButtonComponent } from './ui/button.component';
         </div>
       </main>
     </div>
+
+    <ng-template #loginView>
+      <router-outlet></router-outlet>
+    </ng-template>
   `,
 })
-export class AppComponent {
-  title = 'TOP SOL - Sistema de Gestão';
+export class AppComponent implements OnInit {
+  title = 'TOP SOL';
+  currentUser$: Observable<User | null>;
 
   // Lucide icons
   MenuIcon = Menu;
@@ -109,4 +122,33 @@ export class AppComponent {
   FileTextIcon = FileText;
   DollarSignIcon = DollarSign;
   BarChart3Icon = BarChart3;
+  LogOutIcon = LogOut;
+
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {
+    this.currentUser$ = this.authService.currentUser$;
+  }
+
+  ngOnInit(): void {
+    // Check if user is authenticated on app start
+    this.currentUser$.subscribe(user => {
+      if (!user && this.router.url !== '/login') {
+        this.router.navigate(['/login']);
+      }
+    });
+  }
+
+  logout(): void {
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+      },
+      error: () => {
+        // Even if logout fails on server, clear local storage
+        this.router.navigate(['/login']);
+      }
+    });
+  }
 }
