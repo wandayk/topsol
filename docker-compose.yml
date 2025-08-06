@@ -2,22 +2,22 @@ services:
   # PostgreSQL Database
   database:
     image: postgres:15-alpine
-    container_name: topsol_database
+    container_name: vekant_database
     restart: unless-stopped
     environment:
-      POSTGRES_DB: topsol
-      POSTGRES_USER: topsol
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-topsol123}
+      POSTGRES_DB: vekant
+      POSTGRES_USER: vekant
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-vekant123}
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/init:/docker-entrypoint-initdb.d
+      - ./docker/database/init:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
     networks:
-      - topsol_network
+      - vekant_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U topsol -d topsol"]
+      test: ["CMD-SHELL", "pg_isready -U vekant -d vekant"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,7 +25,7 @@ services:
   # Redis Cache
   redis:
     image: redis:7-alpine
-    container_name: topsol_redis
+    container_name: vekant_redis
     restart: unless-stopped
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
     volumes:
@@ -33,7 +33,7 @@ services:
     # ports:
       # - "6379:6379"
     networks:
-      - topsol_network
+      - vekant_network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -43,9 +43,9 @@ services:
   # Laravel Backend
   backend:
     build:
-      context: ./backend
+      context: ./back-end
       dockerfile: Dockerfile
-    container_name: topsol_backend
+    container_name: vekant_backend
     restart: unless-stopped
     working_dir: /var/www
     environment:
@@ -54,13 +54,13 @@ services:
       - DB_CONNECTION=pgsql
       - DB_HOST=database
       - DB_PORT=5432
-      - DB_DATABASE=topsol
-      - DB_USERNAME=topsol
-      - DB_PASSWORD=${DB_PASSWORD:-topsol123}
+      - DB_DATABASE=vekant
+      - DB_USERNAME=vekant
+      - DB_PASSWORD=${DB_PASSWORD:-vekant123}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     volumes:
-      - ./backend:/var/www
+      - ./back-end:/var/www
       - backend_storage:/var/www/storage
       - backend_cache:/var/www/bootstrap/cache
     depends_on:
@@ -69,7 +69,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - topsol_network
+      - vekant_network
     healthcheck:
       test: ["CMD", "php", "artisan", "migrate:status"]
       interval: 30s
@@ -79,17 +79,23 @@ services:
   # Angular Frontend
   frontend:
     build:
-      context: ./frontend
+      context: ./front-end
       dockerfile: Dockerfile
-      target: production
-    container_name: topsol_frontend
+      target: development
+    container_name: vekant_frontend
     restart: unless-stopped
+    volumes:
+      - ./front-end/src:/app/src:ro
+      - ./front-end/angular.json:/app/angular.json:ro
+      - ./front-end/tsconfig.json:/app/tsconfig.json:ro
+      - ./front-end/tsconfig.app.json:/app/tsconfig.app.json:ro
+      - ./front-end/tailwind.config.js:/app/tailwind.config.js:ro
     ports:
-      - "4200:80"
+      - "4200:4200"
     networks:
-      - topsol_network
+      - vekant_network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4200"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -97,22 +103,22 @@ services:
   # NGINX Proxy
   nginx:
     build:
-      context: ./nginx
+      context: ./docker/nginx
       dockerfile: Dockerfile
-    container_name: topsol_nginx
+    container_name: vekant_nginx
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/ssl:/etc/nginx/ssl
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/nginx/ssl:/etc/nginx/ssl
       - backend_storage:/var/www/storage:ro
     depends_on:
       - backend
       - frontend
     networks:
-      - topsol_network
+      - vekant_network
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 30s
@@ -130,5 +136,5 @@ volumes:
     driver: local
 
 networks:
-  topsol_network:
+  vekant_network:
     driver: bridge
