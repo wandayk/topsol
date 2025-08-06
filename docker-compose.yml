@@ -1,0 +1,139 @@
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:15-alpine
+    container_name: topsol_database
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: topsol
+      POSTGRES_USER: topsol
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-topsol123}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - topsol_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U topsol -d topsol"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: topsol_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
+    # ports:
+      # - "6379:6379"
+    networks:
+      - topsol_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Laravel Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: topsol_backend
+    restart: unless-stopped
+    working_dir: /var/www
+    environment:
+      - APP_ENV=${APP_ENV:-local}
+      - APP_DEBUG=${APP_DEBUG:-true}
+      - DB_CONNECTION=pgsql
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_DATABASE=topsol
+      - DB_USERNAME=topsol
+      - DB_PASSWORD=${DB_PASSWORD:-topsol123}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./backend:/var/www
+      - backend_storage:/var/www/storage
+      - backend_cache:/var/www/bootstrap/cache
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - topsol_network
+    healthcheck:
+      test: ["CMD", "php", "artisan", "migrate:status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Angular Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: topsol_frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "4200:4200"
+    networks:
+      - topsol_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4200"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # NGINX Proxy
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: topsol_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - backend_storage:/var/www/storage:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - topsol_network
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_storage:
+    driver: local
+  backend_cache:
+    driver: local
+
+networks:
+  topsol_network:
+    driver: bridge
