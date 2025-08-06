@@ -4,6 +4,7 @@ import { RouterOutlet, RouterModule, Router } from '@angular/router';
 import { LucideAngularModule, Menu, Users, Package, FileText, DollarSign, BarChart3, LogOut } from 'lucide-angular';
 import { ButtonComponent } from './ui/button.component';
 import { AuthService, User } from './features/auth/auth.service';
+import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -14,7 +15,8 @@ import { Observable } from 'rxjs';
     RouterOutlet,
     RouterModule,
     LucideAngularModule,
-    ButtonComponent
+    ButtonComponent,
+    ToastContainerComponent
   ],
   template: `
     <div class="flex h-screen bg-background" *ngIf="currentUser$ | async as user; else loginView">
@@ -109,10 +111,13 @@ import { Observable } from 'rxjs';
     <ng-template #loginView>
       <router-outlet></router-outlet>
     </ng-template>
+    
+    <!-- Toast Container -->
+    <app-toast-container></app-toast-container>
   `,
 })
 export class AppComponent implements OnInit {
-  title = 'TOP SOL';
+  title = 'VEKANT';
   currentUser$: Observable<User | null>;
 
   // Lucide icons
